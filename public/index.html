@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <!-- Убираем увеление на моб когда нажимаешь на инпут -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+        window.addEventListener('load', () => {
+            const socket = io();
+
+            const form = document.getElementById("form");
+            const input = document.getElementById("input");
+            const onlineList = document.getElementById('online');
+
+            form.addEventListener("submit", (e) => {
+                e.preventDefault();
+
+                /* Проверка что б пустую строку не отправлять */
+                if (input.value) {
+                    /* Отправляем на сервер сообщение с тегом  "CHAT_MESSAGE" */
+                    socket.emit("CHAT_MESSAGE", { message: input.value });
+
+                    /* Проверяем если приватное сообщение то добовляем его в наш чат */
+                    if (input.value.includes('@')) {
+                        const list = document.getElementById('list');
+                        const item = document.createElement('li');
+                        item.innerHTML = `Приватное сообщение: ${input.value}`;
+                        list.appendChild(item);
+                    }
+                    /* Очищаем инпут */
+                    input.value = '';
+                }
+
+            });
+
+            /* Слушаем от сервера по тегу  "CHAT_UPDATE" */
+            socket.on('CHAT_UPDATE', ({ message }) => {
+                /* Ищем ul */
+                const list = document.getElementById('list');
+
+                /* Создаем li */
+                const item = document.createElement('li');
+                /* Добовлеем сообщение в li */
+                item.innerHTML = message;
+                /* Добовляем в дом li */
+                list.appendChild(item);
+
+                /* Скрол в низ */
+                window.scrollTo(0, document.body.scrollHeight);
+
+            })
+
+            /* Слушаем от сервера по тегу "chat_online" */
+            socket.on('chat_online', ({ usersChat }) => {
+                /* И все по анологии перебираем массив и создаем список и добовляем в ul */
+                const listOnline = usersChat.map(id => `<li id="onlineItem">${id}</li>`);
+                listOnline.unshift(`<li id="onlineItem">Online: ${listOnline.length}</li>`)
+                onlineList.innerHTML = listOnline.join(' ');
+            })
+        })
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding-bottom: 20px;
+        }
+
+        #form {
+            position: fixed;
+            bottom: 0;
+            padding: 20px;
+            background-color: lightsalmon;
+            display: flex;
+            width: 100%;
+        }
+
+        #input {
+            width: 80%;
+            border-radius: 5px;
+            padding: 10px 30px;
+            border: none;
+            outline: none;
+        }
+
+        #btn {
+            padding: 10px 30px;
+            border-radius: 5px;
+            background-color: limegreen;
+            border: none;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-left: 30px;
+        }
+
+        #list {
+            list-style: none;
+            padding: 10px 40px;
+            position: relative;
+            letter-spacing: 1px;
+            flex-grow: 2;
+        }
+
+        #list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        #list li::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            width: 10px;
+            height: 10px;
+            background-color: lightsalmon;
+            border-radius: 50%;
+        }
+
+        #btn:hover {
+            background-color: green;
+            transition: all 0.5s linear;
+        }
+
+        #online {
+            background-color: rgb(86, 137, 168);
+            list-style: none;
+            width: 250px;
+            padding: 30px;
+            margin: 0;
+            height: calc(100vh - 80px);
+            color: white;
+            letter-spacing: 1px;
+            box-shadow: 6px 0px 10px -5px rgb(0 0 0 / 30%);
+        }
+
+        #online li:not(:first-child) {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        #online li:not(:first-child)::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            width: 10px;
+            height: 2px;
+            background-color: lightsalmon;
+
+        }
+
+        #online li:first-child {
+            font-size: 20px;
+            text-transform: uppercase;
+            border-bottom: 1px solid lightsalmon;
+            margin-bottom: 20px;
+        }
+
+        #div {
+            display: flex;
+        }
+    </style>
+    <title>SocketIO</title>
+</head>
+
+<body>
+    <main>
+        <section>
+            <div id="div">
+                <ul id="online"></ul>
+                <ul id="list">
+            </div>
+            </ul>
+            <form id="form">
+                <input type="text" id="input" autocomplete="off">
+                <button type="submit" id="btn">Send</button>
+            </form>
+        </section>
+    </main>
+</body>
+
+</html>
