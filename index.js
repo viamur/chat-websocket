@@ -1,11 +1,20 @@
 const express = require('express');
 const path = require('path');
+require('dotenv').config();
 
 const app = express();
 const publicPath = path.join(__dirname, 'public');
 
+const PORT = process.env.PORT;
+const CORS_ORIGIN = process.env.CORS_ORIGIN;
+
 const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, {
+  cors: {
+    origin: CORS_ORIGIN,
+    methods: ['GET', 'POST'],
+  },
+});
 
 app.use(express.static(publicPath));
 
@@ -56,6 +65,6 @@ io.on('connection', socket => {
   });
 });
 
-http.listen(5000, () => {
-  console.log('listening on *:5000');
+http.listen(PORT, () => {
+  console.log(`listening on ${PORT}`);
 });
